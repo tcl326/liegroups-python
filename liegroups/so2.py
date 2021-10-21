@@ -157,10 +157,7 @@ class SO2(LieGroupBase):
         return np.array([[1]])
 
     def rjacinv(self) -> Jacobian:
-        """Compute the right jacobian of self
-
-        See Eqs. (41) for general computation
-        See Eqs. (126) for SO2 specific
+        """Compute the inverse of right jacobian of self
         """
         return self.rjac()
 
