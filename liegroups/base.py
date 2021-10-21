@@ -1,11 +1,20 @@
+"""
+Defines the basic interface of Lie group elements
+"""
+
+
 from __future__ import annotations  # For forward declaration of type hints
+
+import math
 from abc import ABC, abstractmethod
 from typing import Optional
-from numpy.lib.arraysetops import isin
 
 import numpy as np
 import numpy.typing as npt
 
+from liegroups.exceptions import LieGroupMismatch
+
+Adjoint = npt.NDArray
 Vector = npt.ArrayLike
 Tangent = npt.ArrayLike
 Jacobian = npt.NDArray
@@ -20,8 +29,15 @@ class LieGroupBase(ABC):
     https://arxiv.org/pdf/1812.01537.pdf
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, *params):
+        """
+        Initialize a Lie group element using easy to understand parameters
+        """
+        self._p = params
+
+    @property
+    def coeff(self):
+        return self._p
 
     @property
     @classmethod
@@ -67,7 +83,7 @@ class LieGroupBase(ABC):
 
     @classmethod
     @abstractmethod
-    def from_matrix(cls) -> LieGroupBase:
+    def from_matrix(cls, matrix: np.ndarray) -> LieGroupBase:
         """
         Construct the Lie group element from its matrix representation
         """
@@ -87,7 +103,6 @@ class LieGroupBase(ABC):
         """
         pass
 
-    @abstractmethod
     def compose(
         self,
         other: LieGroupBase,
@@ -106,6 +121,21 @@ class LieGroupBase(ABC):
         Returns:
             The composition of self and other (self @ Other)
         """
+        if self.__class__ != other.__class__:
+            raise LieGroupMismatch(
+                f"The compose method operates on two elements of the same group, got {self.__class__.__name__} and {other.__class__.__name__}"
+            )
+
+        return self._compose(other, J_mc_ma, J_mc_mb)
+
+    @abstractmethod
+    def _compose(
+        self,
+        other: LieGroupBase,
+        J_mc_ma: OptionalJacobian = None,
+        J_mc_mb: OptionalJacobian = None,
+    ) -> LieGroupBase:
+        """Returns the composition of self and another element of the same Lie group."""
         pass
 
     @abstractmethod
@@ -157,7 +187,7 @@ class LieGroupBase(ABC):
         pass
 
     @abstractmethod
-    def adjoint(self) -> npt.NDArray:
+    def adjoint(self) -> Adjoint:
         """Compute the adjoint of the transformation
 
         See Eqs. (29)
@@ -173,6 +203,11 @@ class LieGroupBase(ABC):
         pass
 
     @abstractmethod
+    def rjacinv(self) -> Jacobian:
+        """Compute the inverse of right jacobian of self
+        """
+        pass
+
     def plus(
         self,
         tangent: Tangent,
@@ -190,9 +225,10 @@ class LieGroupBase(ABC):
         Returns:
             The resulting Lie group element
         """
-        pass
+        if J_mout_t is not None:
+            J_mout_t[...] = self.rjac()
+        return self.compose(self.__class__.exp(tangent), J_mout_m, None)
 
-    @abstractmethod
     def minus(
         self,
         other: LieGroupBase,
@@ -210,7 +246,29 @@ class LieGroupBase(ABC):
         Returns:
             The resulting tangent in vector form
         """
-        pass
+        diff = other.inverse().compose(self)
+        if J_t_ma is not None:
+            J_t_ma[...] = diff.rjacinv()
+
+        if J_t_mb is not None:
+            J_t_mb[...] = -(diff.inverse().rjacinv())
+
+        return diff.log()
+
+    def almost_equal(self, other: LieGroupBase, **kwargs) -> bool:
+        for c1, c2 in zip(self.coeff, other.coeff):
+            if not math.isclose(c1, c2, **kwargs):
+                return False
+        return True
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}{repr(self.coeff)}"
+
+    def __eq__(self, other: LieGroupBase) -> bool:
+        return self.__class__ == other.__class__ and self.coeff == other.coeff
+
+    def __hash__(self) -> int:
+        return hash(self.coeff)
 
     def __matmul__(self, other: LieGroupBase) -> LieGroupBase:
         """
