@@ -15,6 +15,7 @@ from liegroups.base import (
     Tangent,
     Vector,
 )
+from liegroups.util import normalize_range
 
 
 class SO2(LieGroupBase):
@@ -29,9 +30,7 @@ class SO2(LieGroupBase):
             theta: the angle of rotation in radians, the action of the group rotates a point counter clockwise by thetea angle about the origin
         """
         # Normalize the angle between (-PI, PI]
-        # See: https://stackoverflow.com/questions/24234609/standard-way-to-normalize-an-angle-to-%CF%80-radians-in-java/24234924
-
-        theta = theta - 2 * math.pi * math.floor((theta + math.pi) / (2 * math.pi))
+        theta = normalize_range(theta, -math.pi, math.pi)
         super().__init__(theta)
 
     @classmethod
