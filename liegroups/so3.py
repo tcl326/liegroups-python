@@ -14,10 +14,9 @@ from liegroups.base import (
     OptionalJacobian,
     Tangent,
     Vector,
+    eps,
 )
 from liegroups.util import normalize_range, norm, uniform_sampling_n_ball_muller, clip
-
-eps = 10 ** -8
 
 
 class SO3(LieGroupBase):

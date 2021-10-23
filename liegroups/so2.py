@@ -139,7 +139,7 @@ class SO2(LieGroupBase):
             A point acted on by the group
         """
         if J_vout_m is not None:
-            skew = np.array([[0, 1], [1, 0]])
+            skew = np.array([[0, -1], [1, 0]])
             J_vout_m[...] = self.matrix @ skew @ vec.reshape(2, 1)
 
         if J_vout_v is not None:

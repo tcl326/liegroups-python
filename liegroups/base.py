@@ -20,6 +20,8 @@ Tangent = npt.ArrayLike
 Jacobian = npt.NDArray
 OptionalJacobian = Optional[Jacobian]
 
+eps = 10 ** -9
+
 
 class LieGroupBase(ABC):
     """
@@ -255,9 +257,9 @@ class LieGroupBase(ABC):
 
         return diff.log()
 
-    def almost_equal(self, other: LieGroupBase, **kwargs) -> bool:
+    def almost_equal(self, other: LieGroupBase, abs_tol=eps) -> bool:
         for c1, c2 in zip(self.coeff, other.coeff):
-            if not math.isclose(c1, c2, **kwargs):
+            if not math.isclose(c1, c2, abs_tol=abs_tol):
                 return False
         return True
 
