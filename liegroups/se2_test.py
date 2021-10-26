@@ -88,8 +88,8 @@ def test_compose():
     x_inverse = x.inverse()
 
     # Test Identity
-    assert x == I.compose(x)
-    assert x == x.compose(I)
+    assert x.almost_equal(I.compose(x))
+    assert x.almost_equal(x.compose(I))
 
     # Test Inverse
     assert I.almost_equal(x.compose(x_inverse))
@@ -142,41 +142,52 @@ def test_act():
     np.testing.assert_almost_equal(j_vout_v, np.array([[0, -1], [1, 0]]))
 
 
-# def test_rjac():
-#     random = SO2.random()
-#     assert random.rjac()[0][0] == 1
+def test_rjac():
+    random = SE2.random()
+    rjac = random.rjac()
+    assert rjac.shape == (3, 3)
 
 
-# def test_exp():
-#     tangent = np.array([math.pi / 2])
-#     exp_map = SO2.exp(tangent)
-#     assert_almost_equal(exp_map.coeff[0], tangent[0])
-
-#     j_m_t = np.zeros((SO2.dof, SO2.dof))
-#     _ = SO2.exp(tangent, j_m_t)
-
-#     assert j_m_t[0][0] == 1
+def test_rjacinv():
+    random = SE2.random()
+    rjac = random.rjac()
+    rjacinv = random.rjacinv()
+    np.testing.assert_almost_equal(rjac @ rjacinv, np.identity(3))
 
 
-# def test_log():
-#     random = SO2.random()
-#     tangent = random.log()
-#     assert_almost_equal(tangent[0], random.coeff[0])
+def test_exp():
+    tangent = np.array([1, 1, math.pi / 2])
+    exp_map = SE2.exp(tangent)
+    assert_almost_equal(exp_map.log()[0], tangent[0])
+    assert_almost_equal(exp_map.log()[1], tangent[1])
+    assert_almost_equal(exp_map.log()[2], tangent[2])
 
-#     j_t_m = np.zeros((SO2.dof, SO2.dof))
-#     _ = random.log(j_t_m)
-#     assert j_t_m[0][0] == 1
+    j_m_t = np.zeros((SE2.dof, SE2.dof))
+    m = SE2.exp(tangent, j_m_t)
 
-
-# def test_adjoint():
-#     adj = SO2.random().adjoint()
-#     assert adj[0][0] == 1
+    np.testing.assert_almost_equal(m.rjac(), j_m_t)
 
 
-# def test_plus_minus_operator():
-#     tau = np.array([0.1])
-#     random = SO2.random()
-#     random_plus = random.plus(tau)
-#     diff = random_plus.minus(random)
+def test_log():
+    random = SE2.random()
+    tangent = random.log()
+    assert random.almost_equal(SE2.exp(tangent))
 
-#     np.testing.assert_almost_equal(tau, diff)
+    j_t_m = np.zeros((SE2.dof, SE2.dof))
+    _ = random.log(j_t_m)
+    np.testing.assert_almost_equal(random.rjacinv(), j_t_m)
+
+
+def test_adjoint():
+    random = SE2.random()
+    adj = random.adjoint()
+    np.testing.assert_almost_equal(adj[0:2, 0:2], random.rotation)
+
+
+def test_plus_minus_operator():
+    tau = np.array([0.1, 0.1, 0.1])
+    random = SE2.random()
+    random_plus = random.plus(tau)
+    diff = random_plus.minus(random)
+
+    np.testing.assert_almost_equal(tau, diff)
