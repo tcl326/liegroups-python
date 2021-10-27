@@ -1,5 +1,5 @@
 """
-Implementation of the Special Euclidean Group 2
+Implementation of the Special Euclidean Group 3
 """
 
 import random
