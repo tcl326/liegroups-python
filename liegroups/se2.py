@@ -237,8 +237,6 @@ class SE2(LieGroupBase):
 
         theta_sq = theta * theta
 
-        print(theta_sq)
-
         if math.isclose(theta_sq, 0, abs_tol=eps):
             a = 1 - theta_sq / 12 * (
                 1 + theta_sq / 60 * (1 + theta_sq / 42 * (1 + theta_sq / 40))
