@@ -1,5 +1,5 @@
 """
-Implementation of the Special Orthogonal Group 2
+Implementation of the Special Orthogonal Group 3
 """
 
 import random
