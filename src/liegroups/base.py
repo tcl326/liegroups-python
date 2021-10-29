@@ -231,6 +231,33 @@ class LieGroupBase(ABC):
             J_mout_t[...] = self.rjac()
         return self.compose(self.__class__.exp(tangent), J_mout_m, None)
 
+    def lplus(
+        self,
+        tangent: Tangent,
+        J_mout_m: OptionalJacobian = None,
+        J_mout_t: OptionalJacobian = None,
+    ) -> LieGroupBase:
+        """Compute the left plus operation of the Lie group.
+
+        See Eqs. (27)
+
+        Args:
+            J_mout_m: Jacobian of the output wrt to self
+            J_mout_t: Jacobian of the ouput wrt to the tangent vector
+        
+        Returns:
+            The resulting Lie group element
+        """
+        other = self.__class__.exp(tangent)
+
+        if J_mout_t is not None:
+            J_mout_t[...] = self.inverse().adjoint() @ other.rjac()
+
+        if J_mout_m is not None:
+            J_mout_m[...] = self.identity().matrix
+
+        return other.compose(self)
+
     def minus(
         self,
         other: LieGroupBase,
@@ -296,6 +323,15 @@ class LieGroupBase(ABC):
             return NotImplemented
 
         return self.plus(tangent)
+
+    def __radd__(self, tangent: Tangent) -> LieGroupBase:
+        """
+        Convenient function to apply the right plus operation of Lie group
+        """
+        if not isinstance(tangent, np.ndarray) and len(tangent) != self.dof:
+            return NotImplemented
+
+        return self.lplus(tangent)
 
     def __sub__(self, other: LieGroupBase) -> Tangent:
         """
